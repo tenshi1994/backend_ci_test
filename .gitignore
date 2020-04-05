@@ -3,5 +3,5 @@
 .DS_Store?
 
 application/cache/*
-/application/config/development/*
+#/application/config/development/*
 
