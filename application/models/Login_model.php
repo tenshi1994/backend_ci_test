@@ -1,12 +1,4 @@
 <?php
-/*
-    Модель работы с авторизцией/регистрацией аккаунта
-    @author: Dmitriy Nyashkin
-    @email: dmitriy@nyashk.in
-    @link: http://nyashk.in
-*/
-
-
 class Login_model extends CI_Model {
 
     public function __construct()
