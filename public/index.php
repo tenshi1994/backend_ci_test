@@ -56,13 +56,7 @@ define('ENVIRONMENT', isset($_SERVER['CI_ENV']) ? $_SERVER['CI_ENV'] : 'developm
 
 if(isset($_SERVER['CI_DOMAIN']))
 {
-    $domain = explode('.', $_SERVER['CI_DOMAIN']);
-    if(count($domain) > 2)
-    {
-        $domain_prefix = array_shift($domain);
-    }
-
-    $domain = implode('.',$domain);
+    $domain = $_SERVER['CI_DOMAIN'];
 }
 define('DOMAIN', !empty($domain) ? $domain: 'example.com');
 
