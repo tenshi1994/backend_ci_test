@@ -14,7 +14,9 @@ class Comment_model extends CI_Emerald_Model
     /** @var int */
     protected $user_id;
     /** @var int */
-    protected $assing_id;
+    protected $assign_id;
+    /** @var int */
+    protected $parent_id;
     /** @var string */
     protected $text;
 
@@ -51,20 +53,20 @@ class Comment_model extends CI_Emerald_Model
     /**
      * @return int
      */
-    public function get_assing_id(): int
+    public function get_assign_id(): int
     {
-        return $this->assing_id;
+        return $this->assign_id;
     }
 
     /**
-     * @param int $assing_id
+     * @param int $assign_id
      *
      * @return bool
      */
-    public function set_assing_id(int $assing_id)
+    public function set_assign_id(int $assign_id)
     {
-        $this->assing_id = $assing_id;
-        return $this->save('assing_id', $assing_id);
+        $this->assign_id = $assign_id;
+        return $this->save('assign_id', $assign_id);
     }
 
 
@@ -74,6 +76,14 @@ class Comment_model extends CI_Emerald_Model
     public function get_text(): string
     {
         return $this->text;
+    }
+
+    /**
+     * @return int
+     */
+    public function get_parent_id(): int
+    {
+        return $this->parent_id;
     }
 
     /**
@@ -133,6 +143,11 @@ class Comment_model extends CI_Emerald_Model
      */
     public function get_likes()
     {
+        $this->is_loaded(TRUE);
+        if (empty($this->comments))
+        {
+            $this->likes = Likes_model::get_all_by_assign_id_and_source($this->get_id(), 'comment');
+        }
         return $this->likes;
     }
 
@@ -196,10 +211,10 @@ class Comment_model extends CI_Emerald_Model
      * @return self[]
      * @throws Exception
      */
-    public static function get_all_by_assign_id(int $assting_id)
+    public static function get_all_by_assign_id(int $assign_id)
     {
 
-        $data = App::get_ci()->s->from(self::CLASS_TABLE)->where(['assign_id' => $assting_id])->orderBy('time_created','ASC')->many();
+        $data = App::get_ci()->s->from(self::CLASS_TABLE)->where(['assign_id' => $assign_id])->orderBy('time_created','ASC')->many();
         $ret = [];
         foreach ($data as $i)
         {
@@ -239,20 +254,45 @@ class Comment_model extends CI_Emerald_Model
 
             $o->id = $d->get_id();
             $o->text = $d->get_text();
-
+            $o->parent_id = $d->get_parent_id();
+            $o->assign_id = $d->get_assign_id();
+            $o->children = [];
             $o->user = User_model::preparation($d->get_user(),'main_page');
 
-            $o->likes = rand(0, 25);
+            $o->likes = Likes_model::preparation($d->get_likes(), 'full_info');
 
             $o->time_created = $d->get_time_created();
             $o->time_updated = $d->get_time_updated();
 
-            $ret[] = $o;
+            $ret[$o->id] = $o;
         }
 
+        // Making tree of comments
+        $ret = Comment_model::make_comment_tree($ret);
 
         return $ret;
     }
 
+    /**
+     * @param self[] $data
+     * @return stdClass[]
+     */
+    private function make_comment_tree($data) {
+
+        foreach ($data as $k => &$v) {
+            if($v->parent_id) {
+                $data[$v->parent_id]->children[] = $v;
+            }
+        }
+        unset($v);
+
+        foreach ($data as $k => $v) {
+            if($v->parent_id != 0) {
+                unset($data[$k]);
+            }
+        }
+
+        return $data;
+    }
 
 }

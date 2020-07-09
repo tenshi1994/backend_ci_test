@@ -21,6 +21,12 @@
 
 nginx/test_task.conf - в nginx conf.d или sites_available укажите ваш домен `CI_DOMAIN`, к примеру `sometestworkspace.com`
 
+###### Apache
+
+apache/test_task.conf - в apache test_task.conf укажите ваш домен `CI_DOMAIN`, к примеру `sometestworkspace.com`
+
+P.S. У меня стоит windows и nginx неправильно отрабатывал, из за этого скинул свой conf file apache 
+
 ###### Приложение
 Изменить на ваши пути
 public/index.php - **$application_folder**

@@ -22,6 +22,8 @@ class User_model extends CI_Emerald_Model {
     protected $avatarfull;
     /** @var int */
     protected $rights;
+    /** @var int */
+    protected $likes;
     /** @var float */
     protected $wallet_balance;
     /** @var float */
@@ -32,6 +34,8 @@ class User_model extends CI_Emerald_Model {
     protected $time_created;
     /** @var string */
     protected $time_updated;
+
+    protected $balance_operations;
 
 
     private static $_current_user;
@@ -170,6 +174,25 @@ class User_model extends CI_Emerald_Model {
     }
 
     /**
+     * @return int
+     */
+    public function get_likes(): int
+    {
+        return $this->likes;
+    }
+
+    /**
+     * @param int $$likes
+     *
+     * @return bool
+     */
+    public function set_likes(int $likes)
+    {
+        $this->likes = $likes;
+        return $this->save('likes', $likes);
+    }
+
+    /**
      * @return float
      */
     public function get_wallet_total_withdrawn(): float
@@ -226,10 +249,21 @@ class User_model extends CI_Emerald_Model {
         return $this->save('time_updated', $time_updated);
     }
 
+    public function get_balance_operations() {
+        $this->is_loaded(TRUE);
+        if (empty($this->balance_operations))
+        {
+            $this->balance_operations = BalanceOperations_model::get_all_by_user_id($this->get_id());
+        }
+        return $this->balance_operations;
+    }
 
     function __construct($id = NULL)
     {
         parent::__construct();
+
+        App::get_ci()->load->model('BalanceOperations_model');
+
         $this->set_id($id);
     }
 
@@ -269,6 +303,57 @@ class User_model extends CI_Emerald_Model {
         return $ret;
     }
 
+    /**
+     * @param string $login
+     * @param string $password
+     * @return static|false
+     */
+    public static function get_by_login_password(string $login, string $password) {
+        $data = App::get_ci()->s->from(self::CLASS_TABLE)
+            ->where('email', $login)
+            ->where('password', $password)
+            ->one();
+
+        if (!$data) {
+            return false;
+        }
+
+        return (new self())->set($data);
+    }
+
+    public function refill_balance(float $amount) {
+
+        $wallet_balance = $this->get_wallet_balance();
+        $wallet_total_refilled = $this->get_wallet_total_refilled();
+
+        $this->set_wallet_balance($wallet_balance + $amount);
+        $this->set_wallet_total_refilled($wallet_total_refilled + $amount);
+
+        BalanceOperations_model::create(array(
+           'user_id' => $this->get_id(),
+           'amount' => $amount,
+           'action' => 'refill'
+        ));
+    }
+
+    public function buy_likes(int $likes, float $amount) {
+        $wallet_balance = $this->get_wallet_balance();
+        $wallet_total_withdrawn = $this->get_wallet_total_withdrawn();
+        $user_likes = $this->get_likes();
+
+        $this->set_wallet_balance($wallet_balance - $amount);
+        $this->set_wallet_total_withdrawn($wallet_total_withdrawn + $amount);
+        $this->set_likes($user_likes + $likes);
+    }
+
+    public function spend_like() {
+        $likes = $this->get_likes();
+        return $this->set_likes(--$likes);
+    }
+
+    public function check_likes_balance() {
+        return $this->likes > 0;
+    }
 
     /**
      * @param User_model|User_model[] $data
@@ -282,6 +367,10 @@ class User_model extends CI_Emerald_Model {
         {
             case 'main_page':
                 return self::_preparation_main_page($data);
+            case 'full_info':
+                return self::_preparation_full_info($data);
+            case 'balance_operations':
+                return self::_preparation_balance_operations($data);
             case 'default':
                 return self::_preparation_default($data);
             default:
@@ -301,6 +390,8 @@ class User_model extends CI_Emerald_Model {
 
         $o->personaname = $data->get_personaname();
         $o->avatarfull = $data->get_avatarfull();
+        $o->wallet_balance = $data->get_wallet_balance();
+        $o->likes = $data->get_likes();
 
         $o->time_created = $data->get_time_created();
         $o->time_updated = $data->get_time_updated();
@@ -309,6 +400,48 @@ class User_model extends CI_Emerald_Model {
         return $o;
     }
 
+    /**
+     * @param User_model $data
+     * @return stdClass
+     */
+    private static function _preparation_full_info($data)
+    {
+        $o = new stdClass();
+
+        $o->id = $data->get_id();
+
+        $o->personaname = $data->get_personaname();
+        $o->avatarfull = $data->get_avatarfull();
+
+        $o->wallet_balance = $data->get_wallet_balance();
+        $o->wallet_total_refilled = $data->get_wallet_total_refilled();
+        $o->wallet_total_withdrawn = $data->get_wallet_total_withdrawn();
+        $o->likes = $data->get_likes();
+        $o->balance_operations = BalanceOperations_model::preparation($data->get_balance_operations(), 'full_info');
+        $o->time_created = $data->get_time_created();
+        $o->time_updated = $data->get_time_updated();
+
+
+        return $o;
+    }
+
+    /**
+     * @param User_model $data
+     * @return stdClass
+     */
+    private static function _preparation_balance_operations($data)
+    {
+        $o = new stdClass();
+
+        $o->id = $data->get_id();
+
+        $o->wallet_balance = $data->get_wallet_balance();
+        $o->wallet_total_refilled = $data->get_wallet_total_refilled();
+        $o->wallet_total_withdrawn = $data->get_wallet_total_withdrawn();
+        $o->balance_operations = BalanceOperations_model::preparation($data->get_balance_operations(), 'full_info');
+
+        return $o;
+    }
 
     /**
      * @param User_model $data
@@ -352,7 +485,6 @@ class User_model extends CI_Emerald_Model {
         $steam_id = intval(self::get_session_id());
         return $steam_id > 0;
     }
-
 
 
     /**

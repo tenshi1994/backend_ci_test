@@ -7,6 +7,19 @@ class Login_model extends CI_Model {
 
     }
 
+    public static function checkLogin(string $login, string $password) {
+        // In future we can encrypt password here
+        $enc_pass = $password;
+
+        $user = User_model::get_by_login_password($login, $enc_pass);
+
+        if(!$user) {
+            throw new CriticalException('Invalid credentials');
+        }
+
+        return $user;
+    }
+
     public static function logout()
     {
         App::get_ci()->session->unset_userdata('id');

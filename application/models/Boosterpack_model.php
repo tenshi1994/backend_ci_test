@@ -10,7 +10,6 @@ class Boosterpack_model extends CI_Emerald_Model
 {
     const CLASS_TABLE = 'boosterpack';
 
-
     /** @var float Цена бустерпака */
     protected $price;
     /** @var float Банк, который наполняется  */
@@ -86,6 +85,19 @@ class Boosterpack_model extends CI_Emerald_Model
         return $this->time_updated;
     }
 
+    public function get_likes(): int
+    {
+        $bank = $this->get_bank();
+        $price = $this->get_price();
+
+        $likes = rand(1, $price + $bank);
+
+        $this->set_bank($price + $bank - $likes);
+
+        return $likes;
+    }
+
+
     /**
      * @param string $time_updated
      *
@@ -95,6 +107,21 @@ class Boosterpack_model extends CI_Emerald_Model
     {
         $this->time_updated = $time_updated;
         return $this->save('time_updated', $time_updated);
+    }
+
+    /**
+     * @return self[]
+     */
+    public static function get_all()
+    {
+
+        $data = App::get_ci()->s->from(self::CLASS_TABLE)->many();
+        $ret = [];
+        foreach ($data as $i)
+        {
+            $ret[] = (new self())->set($i);
+        }
+        return $ret;
     }
 
     function __construct($id = NULL)
@@ -110,6 +137,46 @@ class Boosterpack_model extends CI_Emerald_Model
 
         return $this;
     }
+
+
+    /**
+     * @param Boosterpack_model|Boosterpack_model[] $data
+     * @param string $preparation
+     * @return stdClass|stdClass[]
+     * @throws Exception
+     */
+    public static function preparation($data, $preparation = 'default')
+    {
+        switch ($preparation)
+        {
+            case 'main_page':
+                return self::_preparation_main_page($data);
+            default:
+                throw new Exception('undefined preparation type');
+        }
+    }
+
+    /**
+     * @param Post_model[] $data
+     * @return stdClass[]
+     */
+    private static function _preparation_main_page($data)
+    {
+        $ret = [];
+
+        foreach ($data as $d){
+            $o = new stdClass();
+
+            $o->id = $d->get_id();
+            $o->price = $d->get_price();
+
+            $ret[] = $o;
+        }
+
+
+        return $ret;
+    }
+
 
     public static function create(array $data)
     {

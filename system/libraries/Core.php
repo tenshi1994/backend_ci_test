@@ -25,6 +25,7 @@ class CI_Core {
     // ACTION | REQUEST ASSIGNED
     const RESPONSE_GENERIC_INTERNAL_ERROR = 'internal_error'; // Если у нас excpetion выбил чтото . в info пишем инфу по ошибке.
     const RESPONSE_GENERIC_NEED_AUTH = 'need_auth'; // Если надо авторизоваться
+    const RESPONSE_GENERIC_AUTH_WRONG = 'auth_wrong'; // Если надо авторизоваться
 
 
     const RESPONSE_GENERIC_DISABLED = 'disabled'; // Фунционал отключен или временно не доступен - через сеттинги выключили
@@ -35,6 +36,8 @@ class CI_Core {
     const RESPONSE_GENERIC_TRY_LATER = 'try_later'; // action was done before. 2nd time dont need to ask :)
     const RESPONSE_GENERIC_NO_DATA = 'no_data'; // нет данных по данному запросу . Пусто или че ? тоже самое что и сверху
     const RESPONSE_GENERIC_SHOULD_WAIT = 'should_wait'; // Действие с задержкой - повторный запрос отправить позже
+    const RESPONSE_GENERIC_NOT_ENOUGH_BALANCE = 'not_enough_balance'; // У юзера нету баланса
+    const RESPONSE_GENERIC_NOT_ENOUGH_LIKE_BALANCE = 'not_enough_like_balance'; // У юзера нету лайков
 
     const WEEK_DAYS = ['su', 'mo', 'tu', 'we', 'th', 'fr', 'sa'];
 }

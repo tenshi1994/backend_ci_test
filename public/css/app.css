@@ -57,3 +57,21 @@
     margin-right: 5px;
 }
 
+.comments-ul {
+    list-style: none;
+}
+
+.color-white {
+    color: #ffffff;
+    align-items: center;
+}
+
+#error-block {
+    display: none;
+    position: fixed;
+    width: 100%;
+    bottom: 10px;
+    text-align: center;
+    z-index: 9999;
+}
+
